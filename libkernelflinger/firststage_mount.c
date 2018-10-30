@@ -65,7 +65,7 @@ static EFI_STATUS revise_diskbus_from_ssdt(CHAR8 *ssdt, UINTN ssdt_len)
 	UINTN pattern_len;
 	struct ACPI_DESC_HEADER *header;
 	UINTN header_len;
-	CHAR8 *p, *max_end;
+	CHAR8 *p, *max_end, *i;
 	PCI_DEVICE_PATH *boot_device;
 
 	header_len = sizeof(struct ACPI_DESC_HEADER);
@@ -92,6 +92,12 @@ static EFI_STATUS revise_diskbus_from_ssdt(CHAR8 *ssdt, UINTN ssdt_len)
 		p += pattern_len - diskbus_sufix_len;
 		efi_snprintf(p, diskbus_sufix_len, (CHAR8 *)"%02x.%x",
 			     boot_device->Device, boot_device->Function);
+		/* in BIOS, format string "%x" doesn't work in a standard way,
+		 * it output uper case of "A" to "F" of hex number in stead of
+		 * "a" to "f" and cause a mismatch with kernel
+		 */
+		for(i = p; i < p + diskbus_sufix_len; i++)
+			*i = tolower(*i);
 		p += strlen(p);
 		*p++ = '/';
 	}
